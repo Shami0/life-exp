@@ -15,6 +15,13 @@
       "when": 1792120966325,
       "tag": "0001_greedy_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793000248505,
+      "tag": "0002_flawless_maestro",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { authPlugin } from "./shared/auth.plugin";
 import { healthRoutes } from "./modules/health/health.routes";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { usersRoutes } from "./modules/users/users.routes";
+import { tasksRoutes } from "./modules/tasks/tasks.routes";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -40,6 +41,7 @@ export function buildApp() {
   app.register(healthRoutes);
   app.register(authRoutes, { prefix: "/auth" });
   app.register(usersRoutes, { prefix: "/users" });
+  app.register(tasksRoutes, { prefix: "/tasks" });
 
   return app;
 }
