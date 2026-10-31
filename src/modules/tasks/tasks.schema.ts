@@ -4,6 +4,7 @@ import {
   uuid,
   text,
   date,
+  smallint,
   timestamp,
   unique,
   index,
@@ -12,6 +13,7 @@ import {
 import { users } from "../users/users.schema";
 
 export const occurrenceStatus = pgEnum("occurrence_status", ["pending", "done", "missed"]);
+export const repeatTypeEnum = pgEnum("repeat_type", ["none", "daily", "weekdays"]);
 
 export const tasks = pgTable(
   "tasks",
@@ -22,6 +24,9 @@ export const tasks = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     notes: text("notes"),
+    repeatType: repeatTypeEnum("repeat_type").notNull().default("none"),
+    repeatDays: smallint("repeat_days").array(), // ISO 1..7, only used for 'weekdays'
+    startDate: date("start_date", { mode: "string" }), // only set for recurring tasks
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

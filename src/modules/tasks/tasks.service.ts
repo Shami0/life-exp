@@ -1,8 +1,11 @@
 import { AppError } from "../../shared/errors";
-import { todayInTimezone } from "../../shared/dates";
+import { addDays, isoWeekday, todayInTimezone } from "../../shared/dates";
 import { usersService } from "../users/users.service";
 import { tasksRepository } from "./tasks.repository";
 import type { CreateTaskInput, UpdateTaskInput } from "./tasks.types";
+
+// How far ahead a day view will generate recurring occurrences
+const GENERATE_AHEAD_DAYS = 60;
 
 // Goes through usersService, never the users repository or table directly
 async function todayFor(userId: string) {
@@ -17,22 +20,47 @@ export const tasksService = {
     const date = input.date ?? today;
     if (date < today) throw new AppError(400, "Cannot schedule a task in the past");
 
-    return tasksRepository.createWithOccurrence({
+    return tasksRepository.create({
       userId,
       title: input.title,
       notes: input.notes ?? null,
       date,
+      repeat: input.repeat,
     });
   },
 
   async listForDate(userId: string, date?: string) {
-    const day = date ?? (await todayFor(userId));
+    const today = await todayFor(userId);
+    const day = date ?? today;
+
+    // Past days are never generated: history stays exactly as it was
+    if (day >= today && day <= addDays(today, GENERATE_AHEAD_DAYS)) {
+      await tasksRepository.generateRecurringForDate(userId, day, isoWeekday(day));
+    }
+
     const occurrences = await tasksRepository.listOccurrencesForDate(userId, day);
     return { date: day, occurrences };
   },
 
   async update(userId: string, id: string, patch: UpdateTaskInput) {
-    const task = await tasksRepository.updateTask(userId, id, patch);
+    const { repeat, ...fields } = patch;
+
+    const existing = await tasksRepository.findTask(userId, id);
+    if (!existing) throw new AppError(404, "Task not found");
+
+    if (repeat) {
+      if (existing.repeatType === "none") {
+        throw new AppError(409, "Only recurring tasks have a repeat rule");
+      }
+      const today = await todayFor(userId);
+      await tasksRepository.updateRepeat(userId, id, repeat, today);
+    }
+
+    if (Object.keys(fields).length > 0) {
+      await tasksRepository.updateTask(userId, id, fields);
+    }
+
+    const task = await tasksRepository.findTask(userId, id);
     if (!task) throw new AppError(404, "Task not found");
     return task;
   },

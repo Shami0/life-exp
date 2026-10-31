@@ -201,7 +201,7 @@ curl -s localhost:3000/tasks/occurrences -H "authorization: Bearer $TOKEN"
 - [x] 2. Drizzle + Postgres, first migration, users table
 - [x] 3. Auth (register, login, JWT access + refresh tokens)
 - [x] 4a. Tasks and occurrences: one-off CRUD
-- [ ] 4b. Recurring tasks (daily / weekdays)
+- [x] 4b. Recurring tasks (daily / weekdays)
 - [ ] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
 - [ ] 5. History endpoints: tasks heatmap
 - [ ] 6. Exercise: library, plans, weekly schedule
