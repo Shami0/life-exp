@@ -11,4 +11,6 @@ export const usersService = {
   findByEmail: (email: string) => usersRepository.findByEmail(email),
   findById: (id: string) => usersRepository.findById(id),
   create: (data: NewUser) => usersRepository.create(data),
+  advanceLastClosedDate: (id: string, day: string) =>
+    usersRepository.advanceLastClosedDate(id, day),
 };

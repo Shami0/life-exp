@@ -7,6 +7,7 @@ import { healthRoutes } from "./modules/health/health.routes";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { usersRoutes } from "./modules/users/users.routes";
 import { tasksRoutes } from "./modules/tasks/tasks.routes";
+import { closePastDays } from "./modules/days/days.hook";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -38,10 +39,17 @@ export function buildApp() {
   });
 
   app.register(authPlugin);
+  // pub rout
   app.register(healthRoutes);
   app.register(authRoutes, { prefix: "/auth" });
-  app.register(usersRoutes, { prefix: "/users" });
-  app.register(tasksRoutes, { prefix: "/tasks" });
+
+  app.register(async (protectedScope) => {
+    protectedScope.addHook("onRequest", protectedScope.authenticate);
+    protectedScope.addHook("preHandler", closePastDays);
+
+    protectedScope.register(usersRoutes, { prefix: "/users" });
+    protectedScope.register(tasksRoutes, { prefix: "/tasks" });
+  });
 
   return app;
 }

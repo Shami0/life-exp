@@ -202,7 +202,7 @@ curl -s localhost:3000/tasks/occurrences -H "authorization: Bearer $TOKEN"
 - [x] 3. Auth (register, login, JWT access + refresh tokens)
 - [x] 4a. Tasks and occurrences: one-off CRUD
 - [x] 4b. Recurring tasks (daily / weekdays)
-- [ ] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
+- [x] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
 - [ ] 5. History endpoints: tasks heatmap
 - [ ] 6. Exercise: library, plans, weekly schedule
 - [ ] 7. Workout sessions, set logs, personal records, exercise heatmap

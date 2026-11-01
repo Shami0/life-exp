@@ -9,8 +9,6 @@ import {
 } from "./tasks.types";
 
 export const tasksRoutes: FastifyPluginAsync = async (app) => {
-  // Every route in this module requires a logged-in user
-  app.addHook("onRequest", app.authenticate);
 
   app.post("/", async (request, reply) => {
     const body = createTaskBody.parse(request.body);

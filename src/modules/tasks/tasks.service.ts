@@ -1,5 +1,5 @@
 import { AppError } from "../../shared/errors";
-import { addDays, isoWeekday, todayInTimezone } from "../../shared/dates";
+import { addDays, todayInTimezone } from "../../shared/dates";
 import { usersService } from "../users/users.service";
 import { tasksRepository } from "./tasks.repository";
 import type { CreateTaskInput, UpdateTaskInput } from "./tasks.types";
@@ -33,9 +33,9 @@ export const tasksService = {
     const today = await todayFor(userId);
     const day = date ?? today;
 
-    // Past days are never generated: history stays exactly as it was
+    // Past days are never generated here: closing them is closeDay's job
     if (day >= today && day <= addDays(today, GENERATE_AHEAD_DAYS)) {
-      await tasksRepository.generateRecurringForDate(userId, day, isoWeekday(day));
+      await tasksRepository.generateRecurringForDate(userId, day);
     }
 
     const occurrences = await tasksRepository.listOccurrencesForDate(userId, day);
@@ -85,4 +85,7 @@ export const tasksService = {
     if (!updated) throw new AppError(404, "Task occurrence not found");
     return updated;
   },
+
+  // Called by the days module for each finished day
+  closeDay: (userId: string, day: string) => tasksRepository.closeDay(userId, day),
 };
