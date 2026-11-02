@@ -8,6 +8,7 @@ import { authRoutes } from "./modules/auth/auth.routes";
 import { usersRoutes } from "./modules/users/users.routes";
 import { tasksRoutes } from "./modules/tasks/tasks.routes";
 import { closePastDays } from "./modules/days/days.hook";
+import { historyRoutes } from "./modules/history/history.routes";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -49,6 +50,7 @@ export function buildApp() {
 
     protectedScope.register(usersRoutes, { prefix: "/users" });
     protectedScope.register(tasksRoutes, { prefix: "/tasks" });
+    protectedScope.register(historyRoutes, { prefix: "/history" });
   });
 
   return app;

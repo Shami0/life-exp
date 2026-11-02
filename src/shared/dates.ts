@@ -31,3 +31,9 @@ export function isoWeekday(date: string): number {
   const day = new Date(`${date}T00:00:00Z`).getUTCDay(); // 0 = Sunday
   return day === 0 ? 7 : day;
 }
+
+export function daysBetween(from: string, to: string): number {
+  return Math.round(
+    (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000,
+  );
+}

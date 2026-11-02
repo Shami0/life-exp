@@ -88,4 +88,7 @@ export const tasksService = {
 
   // Called by the days module for each finished day
   closeDay: (userId: string, day: string) => tasksRepository.closeDay(userId, day),
+    
+  dailyCounts: (userId: string, from: string, to: string) =>
+    tasksRepository.dailyCounts(userId, from, to),
 };

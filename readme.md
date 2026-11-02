@@ -20,6 +20,8 @@ Built step by step with TypeScript, Fastify, PostgreSQL and Drizzle ORM. Current
 | Orange | Some done, some missed |
 | Red | Scheduled, but nothing done |
 
+Today is reported as `open` while tasks are still pending, since the day isn't over (it shows `done` as soon as everything is done).
+
 **Frozen history.** Past days can't be edited. Deleting a task archives it: future pending occurrences are removed, past ones stay.
 
 **Dates, not timestamps.** Calendar days are stored as `YYYY-MM-DD` and "today" is calculated in each user's own timezone.
@@ -33,6 +35,19 @@ Built step by step with TypeScript, Fastify, PostgreSQL and Drizzle ORM. Current
 | Repeat | One-off, daily, or chosen weekdays | Weekly schedule, repeats by default |
 
 Project micro-tasks will be ordinary tasks with a scheduled date, so they get history and carry-over for free. Dependencies ("B can't start until A is done") auto-reschedule B to the day after A finishes.
+
+## How day closing works
+
+A day is *closed* once it is over (in the user's timezone). Closing happens lazily: on the first authenticated request after a day ends, `days.service` closes every finished day since `users.last_closed_date`, one day at a time, as if the app had been opened every day.
+
+Closing a day `D`:
+
+1. Create the recurring occurrences for `D` that nobody generated (days the app wasn't opened).
+2. Mark everything still `pending` on `D` as `missed`. The day is now frozen.
+3. Create the recurring occurrences for `D+1`.
+4. Carry each missed task over to `D+1` as a new pending occurrence (`carried_from_id` points at the missed one). If the task already has its own occurrence on `D+1`, no copy is made, so a recurring task's next scheduled occurrence replaces a carried one.
+
+Closing is idempotent (unique `(task_id, date)` plus `ON CONFLICT DO NOTHING`), and `last_closed_date` only ever moves forward, so concurrent requests are safe. Auth and closing are applied together in `app.ts` to every protected route.
 
 ## Tech stack
 
@@ -67,6 +82,8 @@ src/
     users/
     auth/
     tasks/
+    days/                 # closes finished days on the first request of a new day
+    history/              # read-only: combines other modules' data into heatmaps
 ```
 
 Rules that keep modules separable:
@@ -181,6 +198,14 @@ Weekdays use ISO numbering: 1 = Monday ... 7 = Sunday.
 
 Recurring occurrences are generated lazily when a day is viewed, never for past days, and never duplicated (unique on task + date).
 
+### History
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/history/tasks?from=&to=` | One entry per day with a status and counts. Defaults to the last 365 days; max 366; `to` is clamped to today. |
+
+Each day looks like `{ date, status, total, done, missed, pending }` where `status` is `none` (gray), `done` (green), `partial` (orange), `missed` (red) or `open` (today, still in progress).
+
 ### Try it
 
 ```bash
@@ -195,6 +220,10 @@ curl -s -X POST localhost:3000/tasks \
 curl -s localhost:3000/tasks/occurrences -H "authorization: Bearer $TOKEN"
 ```
 
+### Testing with Postman
+
+Import `postman/life-exp.postman_collection.json` and `postman/life-exp.postman_environment.json`, select the **life-exp local** environment, and run **Auth > Register** once. Tokens are saved automatically and refreshed before they expire.
+
 ## Roadmap
 
 - [x] 1. Project setup (Fastify, TypeScript, Zod env, Docker Postgres, health check)
@@ -203,7 +232,8 @@ curl -s localhost:3000/tasks/occurrences -H "authorization: Bearer $TOKEN"
 - [x] 4a. Tasks and occurrences: one-off CRUD
 - [x] 4b. Recurring tasks (daily / weekdays)
 - [x] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
-- [ ] 5. History endpoints: tasks heatmap
+- [ ] 5a. History: tasks heatmap endpoint
+- [ ] 5b. History: day detail and streak stats
 - [ ] 6. Exercise: library, plans, weekly schedule
 - [ ] 7. Workout sessions, set logs, personal records, exercise heatmap
 - [ ] 8. Projects, phases (with target dates), dependencies, auto-reschedule

@@ -210,6 +210,27 @@ export const tasksRepository = {
       .orderBy(asc(taskOccurrences.createdAt));
   },
 
+  // Per-day totals for the history views. Archived tasks still count: history never changes.
+  async dailyCounts(userId: string, from: string, to: string) {
+    return db
+      .select({
+        date: taskOccurrences.date,
+        total: sql<number>`count(*)`.mapWith(Number),
+        done: sql<number>`count(*) filter (where ${taskOccurrences.status} = 'done')`.mapWith(Number),
+        missed: sql<number>`count(*) filter (where ${taskOccurrences.status} = 'missed')`.mapWith(Number),
+      })
+      .from(taskOccurrences)
+      .where(
+        and(
+          eq(taskOccurrences.userId, userId),
+          gte(taskOccurrences.date, from),
+          lte(taskOccurrences.date, to),
+        ),
+      )
+      .groupBy(taskOccurrences.date)
+      .orderBy(asc(taskOccurrences.date));
+  },
+
   async findOccurrence(userId: string, id: string) {
     const [row] = await db
       .select()
