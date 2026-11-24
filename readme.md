@@ -232,7 +232,7 @@ Import `postman/life-exp.postman_collection.json` and `postman/life-exp.postman_
 - [x] 4a. Tasks and occurrences: one-off CRUD
 - [x] 4b. Recurring tasks (daily / weekdays)
 - [x] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
-- [ ] 5a. History: tasks heatmap endpoint
+- [x] 5a. History: tasks heatmap endpoint
 - [ ] 5b. History: day detail and streak stats
 - [ ] 6. Exercise: library, plans, weekly schedule
 - [ ] 7. Workout sessions, set logs, personal records, exercise heatmap
