@@ -6,4 +6,6 @@ export const heatmapQuery = z.object({
   to: dateString.optional(),
 });
 
+export const dayParams = z.object({ date: dateString });
+
 export type HeatmapQuery = z.infer<typeof heatmapQuery>;

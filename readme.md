@@ -149,6 +149,7 @@ The compose file publishes Postgres on host port **5433** (not 5432) to avoid cl
 | `npm run db:generate` | Generate a migration from schema changes |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:studio` | Open Drizzle Studio to browse data |
+| `npm run scenario:closing` | End-to-end check of day closing, carry-over and the heatmap on throwaway data (server must be running) |
 
 ### Database workflow
 
@@ -203,8 +204,12 @@ Recurring occurrences are generated lazily when a day is viewed, never for past 
 | Method | Path | Description |
 |---|---|---|
 | GET | `/history/tasks?from=&to=` | One entry per day with a status and counts. Defaults to the last 365 days; max 366; `to` is clamped to today. |
+| GET | `/history/tasks/:date` | One day (today or earlier): status, counts and every task on it, including whether it was carried over. |
+| GET | `/history/tasks/stats` | Current and longest streak, day counts per status, tasks done/missed and completion rate, since the account was created. |
 
 Each day looks like `{ date, status, total, done, missed, pending }` where `status` is `none` (gray), `done` (green), `partial` (orange), `missed` (red) or `open` (today, still in progress).
+
+**Streak rules:** a `done` day extends the streak and a `partial` or `missed` day breaks it. Days with nothing scheduled (`none`) and an unfinished today (`open`) neither extend nor break it. `completionRate` is tasks done divided by tasks done plus missed; a task carried over for several days counts as a separate miss each day.
 
 ### Try it
 
@@ -233,9 +238,11 @@ Import `postman/life-exp.postman_collection.json` and `postman/life-exp.postman_
 - [x] 4b. Recurring tasks (daily / weekdays)
 - [x] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
 - [x] 5a. History: tasks heatmap endpoint
-- [ ] 5b. History: day detail and streak stats
-- [ ] 6. Exercise: library, plans, weekly schedule
-- [ ] 7. Workout sessions, set logs, personal records, exercise heatmap
+- [x] 5b. History: day detail and streak stats
+- [ ] 6a. Exercise library: built-in exercises plus your own, each declaring what it tracks
+- [ ] 6b. Workout plans: exercises with sets and targets, default plans you can copy
+- [ ] 6c. Weekly schedule: which plan on which day, repeating
+- [ ] 7. Sessions, set logs, personal records, exercise heatmap and day closing for workouts
 - [ ] 8. Projects, phases (with target dates), dependencies, auto-reschedule
 - [ ] 9. Combined overview heatmap, tests (Vitest), polish
 

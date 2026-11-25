@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { computeStreaks, type DayStatus } from "../src/modules/history/history.logic";
 
 const BASE = process.env.BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -86,6 +87,46 @@ async function main() {
       status: "done",
     });
     check("a past occurrence is frozen (409)", frozen.status === 409, `status ${frozen.status}`);
+
+
+        // --- 5b: day detail ---
+    const detail = await api("GET", `/history/tasks/${from}`, token);
+    const detailItems = (detail.data.items as { title: string; status: string }[])
+      .map((i) => `${i.title}:${i.status}`)
+      .sort();
+    check(
+      "day detail lists the first day's tasks and status",
+      detail.data.status === "partial" &&
+        JSON.stringify(detailItems) === JSON.stringify(["Drink water:missed", "Pay rent:missed", "Walk:done"]),
+      `status ${detail.data.status}, items [${detailItems.join(", ")}]`,
+    );
+
+    const future = await api("GET", `/history/tasks/${addDays(today, 1)}`, token);
+    check("day detail for a future day is rejected (400)", future.status === 400, `status ${future.status}`);
+
+    // --- 5b: stats ---
+    const stats = (await api("GET", "/history/tasks/stats", token)).data;
+    check(
+      "stats match the scenario",
+      stats.currentStreak === 0 &&
+        stats.longestStreak === 0 &&
+        stats.tasksDone === 1 &&
+        stats.tasksMissed === 6 &&
+        stats.completionRate === 0.143 &&
+        JSON.stringify(stats.days) === JSON.stringify({ done: 0, partial: 1, missed: 2, none: 0, open: 1 }),
+      JSON.stringify(stats),
+    );
+
+    // --- 5b: streak rules (pure logic, no server needed) ---
+    const streak = (...statuses: DayStatus[]) => computeStreaks(statuses.map((status) => ({ status })));
+    const is = (s: { current: number; longest: number }, current: number, longest: number) =>
+      s.current === current && s.longest === longest;
+    check("streak: three done days", is(streak("done", "done", "done"), 3, 3));
+    check("streak: a missed day resets it", is(streak("done", "done", "missed", "done"), 1, 2));
+    check("streak: rest days neither break nor extend it", is(streak("done", "none", "none", "done"), 2, 2));
+    check("streak: a partial day breaks it", is(streak("done", "done", "partial", "open"), 0, 2));
+    check("streak: an unfinished today is ignored", is(streak("done", "done", "open"), 2, 2));
+
   } finally {
     await pool.query("delete from users where id = $1", [userId]); // cascades to tasks, occurrences, tokens
     await pool.end();
