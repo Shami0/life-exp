@@ -11,8 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "build": "tsc -p tsconfig.build.json",
-    "scenario:closing": "tsx --env-file=.env scripts/scenario-closing.ts"
-
+    "scenario:closing": "tsx --env-file=.env scripts/scenario-closing.ts",
+    "db:seed": "tsx --env-file=.env scripts/seed.ts"
   },
   "keywords": [],
   "author": "",

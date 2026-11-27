@@ -82,6 +82,7 @@ src/
     users/
     auth/
     tasks/
+    exercise/             # exercise library; plans, schedule and logs to come
     days/                 # closes finished days on the first request of a new day
     history/              # read-only: combines other modules' data into heatmaps
 ```
@@ -103,6 +104,7 @@ npm install
 cp .env.example .env        # then edit the values
 docker compose up -d        # starts Postgres
 npm run db:migrate          # applies migrations
+npm run db:seed             # loads the built-in exercises
 npm run dev                 # starts the API with auto-reload
 ```
 
@@ -149,6 +151,7 @@ The compose file publishes Postgres on host port **5433** (not 5432) to avoid cl
 | `npm run db:generate` | Generate a migration from schema changes |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:studio` | Open Drizzle Studio to browse data |
+| `npm run db:seed` | Load or update the built-in exercises (safe to run repeatedly) |
 | `npm run scenario:closing` | End-to-end check of day closing, carry-over and the heatmap on throwaway data (server must be running) |
 
 ### Database workflow
@@ -199,6 +202,18 @@ Weekdays use ISO numbering: 1 = Monday ... 7 = Sunday.
 
 Recurring occurrences are generated lazily when a day is viewed, never for past days, and never duplicated (unique on task + date).
 
+### Exercises
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/exercises?q=&metric=` | Built-in exercises plus your own. Search by name with `q`, filter with `metric` (`reps`, `weight`, `duration`, `distance`). |
+| GET | `/exercises/:id` | One exercise |
+| POST | `/exercises` | Create your own: `{ name, metrics, notes? }` |
+| PATCH | `/exercises/:id` | Rename, edit notes, or add metrics (metrics can't be removed). Your own exercises only. |
+| DELETE | `/exercises/:id` | Archive your own exercise. Old plans and logs keep referencing it. |
+
+`metrics` says what can be recorded for one set: `reps`, `weight` (kg), `duration` (seconds), `distance` (metres). Built-in exercises are shared by everyone and read-only. Names are unique (case-insensitive) across built-in exercises and your own.
+
 ### History
 
 | Method | Path | Description |
@@ -239,10 +254,10 @@ Import `postman/life-exp.postman_collection.json` and `postman/life-exp.postman_
 - [x] 4c. Day closing and carry-over (`lastClosedDate`, missed tasks, frozen days)
 - [x] 5a. History: tasks heatmap endpoint
 - [x] 5b. History: day detail and streak stats
-- [ ] 6a. Exercise library: built-in exercises plus your own, each declaring what it tracks
-- [ ] 6b. Workout plans: exercises with sets and targets, default plans you can copy
-- [ ] 6c. Weekly schedule: which plan on which day, repeating
-- [ ] 7. Sessions, set logs, personal records, exercise heatmap and day closing for workouts
+- [x] 6a. Exercise library (built-in and custom exercises)
+- [ ] 6b. Workout plans (sets and targets, default plans to copy)
+- [ ] 6c. Weekly schedule (repeating)
+- [ ] 7. Workout sessions, set logs, personal records, exercise heatmap
 - [ ] 8. Projects, phases (with target dates), dependencies, auto-reschedule
 - [ ] 9. Combined overview heatmap, tests (Vitest), polish
 
